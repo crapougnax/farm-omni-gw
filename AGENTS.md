@@ -31,6 +31,10 @@ All documentation, code, hardware definitions, and firmware configurations in th
 - All code, schematics descriptions, comments, documentation, and commit messages MUST be written strictly in **International English**.
 - No vendor lock-in or proprietary cloud dependencies.
 
+### C. Open-Source License Verification for Component Libraries (Strict Rule)
+- **Mandatory License Audit:** Whenever selecting, integrating, or packaging a hardware component, sensor, transceiver, or modem, **ALWAYS verify whether the vendor-provided SDKs, HALs, drivers, and firmware libraries are 100% compatible with open-source licensing** (e.g., MIT, BSD, Apache 2.0, GPL, or AGPL-3.0).
+- **Zero Proprietary Blobs & NDA Traps:** Strictly reject components that require non-redistributable binary blobs, proprietary commercial runtimes, or vendor NDAs that would compromise the project's **AGPL-v3** compliance and open-hardware accessibility. Every driver must be upstreamable or compilable directly from source under OpenWrt.
+
 ---
 
 ## 🛠️ 3. Verification & Build Commands
