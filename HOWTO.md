@@ -1,6 +1,7 @@
 # Complete Engineering & Deployment Guide — Farm Omni Gateway
+### *Building a Complete Agricultural Digital Twin for Under $500*
 
-This guide covers the end-to-end implementation, component pinouts, power design, Linux OpenWrt firmware configuration, and deployment of the **Farm Omni Gateway**.
+This guide covers the end-to-end hardware implementation, component pinouts, power design, Linux OpenWrt firmware configuration, and digital twin data integration for the **Farm Omni Gateway**.
 
 ---
 
@@ -10,9 +11,10 @@ This guide covers the end-to-end implementation, component pinouts, power design
 3. [OpenWrt 23.05 OS & Kernel Setup](#3-openwrt-2305-os--kernel-setup)
 4. [LoRaWAN Concentrator Setup (`chirpstack-concentratord`)](#4-lorawan-concentrator-setup-chirpstack-concentratord)
 5. [4G Cellular Backhaul Configuration (`Quectel EC200U`)](#5-4g-cellular-backhaul-configuration-quectel-ec200u)
-6. [GPS RTK Base Station Setup (`u-blox ZED-F9P` + NTRIP Caster)](#6-gps-rtk-base-station-setup-u-blox-zed-f9p--ntrip-caster)
+6. [GPS RTK Base Station Setup (`LC29H` / `ZED-F9P` + NTRIP Caster)](#6-gps-rtk-base-station-setup-lc29h--zed-f9p--ntrip-caster)
 7. [Agricultural Weather & Soil Sensor Integration (`SDI-12` & `RS-485`)](#7-agricultural-weather--soil-sensor-integration-sdi-12--rs-485)
-8. [Physical Enclosure, RF Layout & Mast Mounting](#8-physical-enclosure-rf-layout--mast-mounting)
+8. [Digital Twin Data Models & Local Storage](#8-digital-twin-data-models--local-storage)
+9. [Physical Enclosure, RF Layout & Mast Mounting](#9-physical-enclosure-rf-layout--mast-mounting)
 
 ---
 
@@ -25,8 +27,8 @@ The MediaTek **MT7628AN** SoC exposes all required high-speed and serial communi
 | **High-Speed SPI** | `SPI_CLK`, `SPI_MOSI`, `SPI_MISO`, `SPI_CS0` (`/dev/spidev0.0`) | **Seeed WM1302 (SX1302)** | LoRa Concentrator data transport (10 MHz clock). |
 | **GPIO Reset** | `GPIO11` | **Seeed WM1302** | Hardware reset line for the SX1302 concentrator. |
 | **USB 2.0 Host** | `USB_DP`, `USB_DM`, `5V_VBUS` (`/dev/cdc-wdm0`, `ttyUSB*`) | **Quectel EC200U-EU** | LTE Cat 1 bis data connection + AT command channel. |
-| **Hardware UART2** | `UART2_RXD`, `UART2_TXD` (`/dev/ttyS2`) | **u-blox ZED-F9P (RTK)** | Binary RTCM3 message stream @ 115200 or 460800 bauds. |
-| **Timepulse PPS** | `GPIO39` (External Interrupt) | **u-blox ZED-F9P** | Nanosecond-accurate PPS pulse for NTP microsecond synchronization. |
+| **Hardware UART2** | `UART2_RXD`, `UART2_TXD` (`/dev/ttyS2`) | **RTK GNSS Receiver** | Binary RTCM3 message stream @ 115200 or 460800 bauds. |
+| **Timepulse PPS** | `GPIO39` (External Interrupt) | **RTK GNSS Receiver** | Nanosecond-accurate PPS pulse for NTP microsecond synchronization. |
 | **Hardware UART1** | `UART1_RXD`, `UART1_TXD` (`/dev/ttyS1`) | **MAX13487 (RS-485)** | Modbus RTU interface for ultrasonic wind and solar radiation sensors. |
 | **Bidirectional Open-Drain** | `GPIO14` (UART Lite / Bitbang) | **SDI-12 Bus (2N7002 MOSFET)** | Multi-depth soil moisture & temperature probes (1200 bauds, 12V bus). |
 | **Pulse Counter** | `GPIO18` (Hardware Edge Counter) | **Tipping Bucket Rain Gauge** | Interrupt counter for precipitation measurement (0.2 mm per pulse). |
@@ -43,14 +45,14 @@ flowchart LR
     MPPT <-->|Charge / Discharge| Battery["12.8V LiFePO4 Battery Pack (6Ah - 10Ah)"]
     MPPT --> Buck12["12V Regulated Rail (SDI-12 Sensors)"]
     MPPT --> Buck5["5V / 3A DC-Buck (Quectel 4G & USB Rails)"]
-    Buck5 --> LDO33["3.3V / 2A LDO (MT7628 SoC, SX1302, ZED-F9P)"]
+    Buck5 --> LDO33["3.3V / 2A LDO (MT7628 SoC, SX1302, RTK)"]
 ```
 
 ### Power Consumption Budget (Nominal Continuous)
 - **MT7628AN Linux SoC** (Wi-Fi beaconing, CPU idle/active): ~750 mW
 - **SX1302 LoRa Concentrator** (8-channel continuous listening): ~350 mW
 - **Quectel EC200U 4G Modem** (Connected idle, periodic MQTT publishing): ~450 mW
-- **u-blox ZED-F9P RTK GNSS** (Tracking 32+ satellites, RTCM3 streaming): ~320 mW
+- **Dual-Band RTK GNSS** (Tracking 32+ satellites, RTCM3 streaming): ~320 mW
 - **Isolated Sensors & Bus Transceivers**: ~250 mW
 - **Total Power Consumption**: **~2.12 Watts (approx. 175 mA @ 12.8V)**.
 - **Battery Autonomy**: A standard 12.8V 8Ah (102 Wh) LiFePO4 battery provides over **48 hours of 100% solar blackout autonomy**.
@@ -97,7 +99,7 @@ config interface 'lan'
 config interface 'wwan'
 	option device '/dev/cdc-wdm0'
 	option proto 'qmi'
-	option apn 'orange'
+	option apn 'internet'
 	option auth 'none'
 	option autoconnect '1'
 ```
@@ -105,10 +107,6 @@ config interface 'wwan'
 ---
 
 ## 4. LoRaWAN Concentrator Setup (`chirpstack-concentratord`)
-
-Instead of legacy monolithic packet forwarders, modern edge gateways utilize **ChirpStack Concentratord**:
-
-### A. Concentratord Configuration (`/etc/chirpstack-concentratord/sx1302/concentratord.toml`)
 
 ```toml
 [concentratord]
@@ -124,7 +122,7 @@ reset_pin=11
 clock_source=1
 antenna_gain=3
 
-# Multi-channel definitions for Europe / Africa (EU868 standard)
+# Multi-channel definitions (EU868 / regional standard)
 [[concentratord.sx1302.channels]]
 frequency=868100000
 bandwidth=125000
@@ -140,11 +138,6 @@ frequency=868500000
 bandwidth=125000
 spread_factor=7
 
-[[concentratord.sx1302.channels]]
-frequency=867100000
-bandwidth=125000
-spread_factor=7
-
 [gateway]
 gateway_id="0016c001f0000001"
 ```
@@ -152,11 +145,6 @@ gateway_id="0016c001f0000001"
 ---
 
 ## 5. 4G Cellular Backhaul Configuration (`Quectel EC200U`)
-
-The Quectel EC200U supports direct QMI (Qualcomm MSM Interface) or standard ECM/RNDIS networking over USB.
-
-### Automatic Connection Daemon (`/etc/init.d/cellular_watchdog`)
-Create a persistent watchdog service to auto-recover cellular connectivity:
 
 ```sh
 #!/bin/sh /etc/rc.common
@@ -170,7 +158,7 @@ start() {
                 echo "Cellular connection dropped. Reconnecting QMI..."
                 uqmi -d /dev/cdc-wdm0 --stop-network 0xffffffff --autoconnect
                 sleep 5
-                uqmi -d /dev/cdc-wdm0 --start-network orange --autoconnect
+                uqmi -d /dev/cdc-wdm0 --start-network internet --autoconnect
             fi
             sleep 60
         done
@@ -180,37 +168,24 @@ start() {
 
 ---
 
-## 6. GPS RTK Base Station Setup (`u-blox ZED-F9P` + NTRIP Caster)
+## 6. GPS RTK Base Station Setup (`LC29H` / `ZED-F9P` + NTRIP Caster)
 
-The gateway acts as an authoritative fixed RTK reference base.
-
-### A. Configuring u-blox ZED-F9P in Fixed Base Mode
-Using `ubxtool` or u-center, configure the ZED-F9P to output RTCM 3.x messages over its secondary UART port (`UART2` on `/dev/ttyS2`):
-- **RTCM 1005**: Stationary RTK reference station ARP with antenna height.
-- **RTCM 1074 / 1077**: GPS MSM4/MSM7 pseudorange, carrier phase, Doppler.
-- **RTCM 1084 / 1087**: GLONASS MSM4/MSM7 observations.
-- **RTCM 1094 / 1097**: Galileo MSM4/MSM7 observations.
-- **RTCM 1124 / 1127**: BeiDou MSM4/MSM7 observations.
-
-### B. Streaming RTCM3 via RTKLIB `str2str`
-Install `str2str` from the RTKLIB package on OpenWrt and publish to the farm's NTRIP caster:
+The gateway acts as an authoritative fixed RTK reference base for precision guidance and topography:
 
 ```bash
-# Stream RTCM3 corrections to centralized or local NTRIP Caster
+# Stream RTCM3 corrections to local or cloud NTRIP Caster
 str2str -in serial://ttyS2:115200#rtcm3 \
-        -out ntripc://:secretpassword@caster.hey.brad.ag:2101/FARM_BASE#rtcm3 \
+        -out ntripc://:secretpassword@caster.local.farm:2101/FARM_BASE#rtcm3 \
         -msg "1005(10),1077(1),1087(1),1097(1),1127(1)" &
 ```
 
-Autonomous tractors, drone seeders, or field rovers equipped with an RTK rover module subscribe to `http://caster.hey.brad.ag:2101/FARM_BASE` and achieve instantaneous **sub-2 centimeter positioning accuracy** across the entire farm!
+Autonomous tractors, drone seeders, or field rovers subscribe to `http://caster.local.farm:2101/FARM_BASE` to achieve **sub-2 centimeter positioning accuracy** across the entire farm without satellite subscription fees.
 
 ---
 
 ## 7. Agricultural Weather & Soil Sensor Integration (`SDI-12` & `RS-485`)
 
 ### A. RS-485 Modbus RTU Weather Daemon (Ultrasonic Anemometer & Solar Radiation)
-Anemometers and pyranometers communicate via RS-485 at 9600 bauds. Run this Python or lightweight C daemon:
-
 ```python
 #!/usr/bin/env python3
 import time
@@ -232,14 +207,53 @@ def read_weather():
 ```
 
 ### B. SDI-12 Multi-Depth Soil Moisture Probes
-SDI-12 commands follow standard ASCII protocol over `/dev/ttyS0` or bitbanged GPIO:
+Commands follow standard ASCII protocol over `/dev/ttyS0` or bitbanged GPIO:
 - Send `0M!` $\rightarrow$ Acknowledged with `00024` (Address 0, measurement ready in 2 seconds, 4 values).
 - Wait 2 seconds.
-- Send `0D0!` $\rightarrow$ Returns `0+24.5+38.2+41.0+43.5` (Surface temperature 24.5°C, volumetric water content at 10cm, 20cm, 30cm, 40cm depth).
+- Send `0D0!` $\rightarrow$ Returns `0+24.5+38.2+41.0+43.5` (Surface temp 24.5°C, volumetric water content at 10cm, 20cm, 30cm, 40cm depth).
 
 ---
 
-## 8. Physical Enclosure, RF Layout & Mast Mounting
+## 8. Digital Twin Data Models & Local Storage
+
+All telemetry is unified in a lightweight on-gateway SQLite database (`/var/data/farm_twin.db`) schema:
+
+```sql
+CREATE TABLE soil_telemetry (
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    probe_id TEXT,
+    depth_cm INTEGER,
+    moisture_pct REAL,
+    temp_c REAL,
+    ec_salinity REAL
+);
+
+CREATE TABLE weather_telemetry (
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    wind_speed_ms REAL,
+    wind_dir_deg REAL,
+    solar_flux_wm2 REAL,
+    rain_mm REAL,
+    ambient_temp REAL,
+    ambient_hum REAL
+);
+
+CREATE TABLE rtk_base_status (
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    base_id TEXT,
+    latitude REAL,
+    longitude REAL,
+    elevation_m REAL,
+    satellites_tracked INTEGER,
+    rtcm_bytes_sent INTEGER
+);
+```
+
+This local database provides an instant **offline-capable digital twin** that can sync incrementally with any upstream dashboard or analytics platform when network connectivity is available.
+
+---
+
+## 9. Physical Enclosure, RF Layout & Mast Mounting
 
 ```text
 ========================================================================
@@ -259,16 +273,12 @@ SDI-12 commands follow standard ASCII protocol over `/dev/ttyS0` or bitbanged GP
                     |
                  +-----+
                  |     | [ Die-cast Aluminum Enclosure IP67 (220x170x90mm) ]
-                 |     | - Houses: MT7628 Carrier, WM1302, EC200U, ZED-F9P
+                 |     | - Houses: MT7628 Carrier, WM1302, EC200U, RTK module
                  |     | - Bottom I/O: 4G SMA, LoRa N-type, M12 Weather, Solar
                  +-----+
                     |
-                    |--- [ 30W Monocrystalline Solar Panel @ 45° Tilt ]
+                    |--- [ 35W Monocrystalline Solar Panel @ 45° Tilt ]
                     |
                    ===   [ 12V LiFePO4 Battery in Waterproof Base Enclosure ]
 ========================================================================
 ```
-
-### Critical Grounding & Surge Protection
-1. **RF Lightning Arresters**: Gas discharge tube arresters must be installed on both the LoRaWAN and GNSS coaxial lines and tied to an earth grounding rod.
-2. **Thermal Dissipation**: The aluminum enclosure serves as a passive heatsink. Couple the MT7628 SoC and SX1302 concentrator using 2mm silicone thermal pads directly against the metal casing.

@@ -1,99 +1,100 @@
-# Farm Omni Gateway (`farm-omni-gw`)
+# Farm Omni Gateway — The Sub-$500 Farm Digital Twin
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Platform: OpenWrt](https://img.shields.io/badge/Platform-OpenWrt_23.05-00BCD4.svg?logo=openwrt&logoColor=white)](https://openwrt.org/)
-[![LoRaWAN: 8--Channel](https://img.shields.io/badge/LoRaWAN-SX1302%20%2F%20SX1303-brightgreen.svg)](#)
+[![Target BOM: < $500](https://img.shields.io/badge/Full%20Farm%20Twin-%3C%20%24500-brightgreen.svg)](#)
+[![LoRaWAN: 8--Channel](https://img.shields.io/badge/LoRaWAN-SX1302%20%2F%20SX1303-blue.svg)](#)
 [![Cellular: 4G LTE Cat 1](https://img.shields.io/badge/Cellular-LTE%20Cat%201%20bis-orange.svg)](#)
-[![RTK: Centimeter Base](https://img.shields.io/badge/GNSS-u--blox%20ZED--F9P%20RTK-purple.svg)](#)
-[![Solar: 100% Off--Grid](https://img.shields.io/badge/Power-MPPT%20LiFePO4%20Solar-success.svg)](#)
+[![RTK: Centimeter Base](https://img.shields.io/badge/GNSS-Centimeter%20RTK%20Base-purple.svg)](#)
+[![Power: 100% Solar](https://img.shields.io/badge/Power-MPPT%20LiFePO4%20Solar-success.svg)](#)
 
-**Farm Omni Gateway** is an open-source, modular, ultra-frugal, off-grid IoT Edge Gateway engineered for precision agriculture (**Hey Brad**) and remote aquaculture (**fshry**).
+> **The Problem**: How to equip an entire agricultural farm to construct its live, high-fidelity **Digital Twin** for **under $500**?
 
-Commercial outdoor gateways (such as the Dragino DLOS8N at $300+) are costly, closed, and limited to basic packet forwarding. **Farm Omni Gateway** delivers an all-in-one outdoor edge hub for **sub-$100 BOM**, combining:
-1. **8-Channel LoRaWAN Concentrator** (`SX1302`/`SX1303`).
-2. **Resilient 4G LTE Cat 1 bis Backhaul** (`Quectel EC200U`).
-3. **High-Precision GNSS RTK Base Station** (`u-blox ZED-F9P` or `Quectel LC29H`) broadcasting RTCM3 corrections to autonomous tractors, drone seeders, and robotic field equipment.
-4. **Isolated Agricultural Field Bus Interfaces** (`SDI-12` soil probes, `RS-485 Modbus RTU` weather sensors, and rain gauge pulse counter).
-5. **Integrated Solar MPPT Power Management** for 12V LiFePO4 batteries (< 2.2W total system consumption).
+Proprietary commercial agritech solutions (Campbell Scientific, Davis Instruments, John Deere Field Connect) demand between **$10,000 and $35,000** for basic telemetry, precision guidance, and weather stations, locking farmers into recurring subscription silos.
+
+**Farm Omni Gateway** is an open-source, modular, off-grid edge system that provides the entire physical-to-digital infrastructure required to model, simulate, and monitor a complete farm in real time.
 
 ---
 
-## 🏗️ System Architecture
+## 🎯 The Sub-$500 Farm Digital Twin Architecture
+
+A complete agricultural digital twin requires five physical capabilities:
+1. **Soil Dynamics**: Multi-depth root zone volumetric water content, temperature, and electrical conductivity (salinity).
+2. **Atmospheric Drivers**: Solar irradiance (photosynthesis potential), wind speed/direction, precipitation, and ambient humidity.
+3. **Centimeter Topography & Parcel Geometry**: Centimeter-precision RTK GNSS base station for 3D elevation modeling, slope drainage, and equipment guidance.
+4. **Water Resource Levels**: Ultrasonic / hydrostatic irrigation pond and cistern level tracking.
+5. **Long-Range Sensor Mesh & Edge Compute**: 8-channel LoRaWAN coverage (10 km radius), 4G LTE backhaul, and local offline data logging.
 
 ```mermaid
 flowchart TD
-    subgraph "Off-Grid Solar Power Stage"
-        Solar["20W - 35W Solar Panel"] --> MPPT["TI BQ24650 MPPT Charger"]
-        Battery["12.8V LiFePO4 Battery"] <--> MPPT
-        MPPT --> PowerBus["Internal Power Rails (3.3V / 5V / 12V)"]
+    subgraph "The Sub-$500 Physical Hardware Stack"
+        GW["<b>Farm Omni Edge Gateway</b> ($110)<br>• 8-Channel LoRaWAN (SX1302)<br>• 4G LTE Cat 1 bis (EC200U)<br>• Solar MPPT + LiFePO4 Power"]
+        RTK["<b>Centimeter RTK Base</b> ($45)<br>• Dual-Band L1/L2 GNSS (LC29H)<br>• Precision parcel topography & guidance"]
+        Weather["<b>Weather Station Suite</b> ($85)<br>• Ultrasonic Wind Speed/Dir (RS-485)<br>• Solar Pyranometer (RS-485)<br>• Tipping Bucket Rain Gauge"]
+        Soil["<b>Soil Moisture Array</b> ($90)<br>• 3× Multi-depth capacitive probes (SDI-12)<br>• Root-zone moisture & temp profile"]
+        Water["<b>Water Tank Level Probe</b> ($35)<br>• Hydrostatic 4-20mA pressure sensor"]
+        SolarPack["<b>Off-Grid Solar Power</b> ($65)<br>• 35W Monocrystalline Panel<br>• 12.8V 8Ah LiFePO4 Battery"]
     end
 
-    subgraph "Host Linux Compute Engine (OpenWrt 23.05)"
-        SoC["<b>MediaTek MT7628AN</b> (580 MHz MIPS)<br>128MB RAM • 32MB SPI Flash<br>Integrated 802.11n Wi-Fi for field technician access"]
+    subgraph "Digital Twin Real-Time Data Layers"
+        DT1["🌱 <b>Soil Moisture & Drainage Twin</b><br>Real-time water table & root stress"]
+        DT2["🌤️ <b>Microclimate & Disease Twin</b><br>GDD, mildew/pest risk models"]
+        DT3["🗺️ <b>Centimeter Topography Twin</b><br>3D DEM, slope runoff, robotic paths"]
+        DT4["💧 <b>Hydraulic Reserve Twin</b><br>Pond & tank balance, irrigation quota"]
     end
 
-    subgraph "Module 1 : 8-Channel LoRaWAN"
-        SX1302["<b>Semtech SX1302 / SX1303</b><br>8 concurrent channels • High-power PA<br>EU868 / US915 / AS923 / IN865"]
-    end
+    GW --- SolarPack
+    GW --- RTK
+    GW --- Weather
+    GW --- Soil
+    GW --- Water
 
-    subgraph "Module 2 : Cellular 4G Backhaul"
-        EC200U["<b>Quectel EC200U</b> (LTE Cat 1 bis)<br>Single antenna • Global Bands • Micro-SIM"]
-    end
-
-    subgraph "Module 3 : Precision GNSS RTK Base"
-        RTK["<b>u-blox ZED-F9P</b> (or Quectel LC29H)<br>Dual-Band L1/L2/L5 GNSS Receiver<br>RTCM 3.x Correction Caster for Farm Robots"]
-    end
-
-    subgraph "Module 4 : Weather & Soil Field Bus"
-        FieldSensors["Multi-depth Soil Probes (SDI-12)<br>Ultrasonic Anemometer & Vane (RS-485)<br>Tipping Bucket Rain Gauge (Pulse Counter)"]
-        Transceivers["<b>Isolated Field Bus Transceivers</b><br>• SDI-12 Bidirectional Drain<br>• RS-485 MAX13487 Auto-Direction<br>• Debounced Pulse Interrupt"]
-    end
-
-    PowerBus --> SoC
-    PowerBus --> SX1302
-    PowerBus --> EC200U
-    PowerBus --> RTK
-    PowerBus --> Transceivers
-
-    SoC <-->|High-Speed SPI Bus| SX1302
-    SoC <-->|USB 2.0 Host| EC200U
-    SoC <-->|UART2 Serial + Timepulse PPS| RTK
-    SoC <-->|UART1 + GPIOs| Transceivers
-    Transceivers <--> FieldSensors
+    GW -->|LoRaWAN / 4G Telemetry| DT1
+    GW -->|Environmental Telemetry| DT2
+    RTK -->|RTCM3 Corrections & Coordinates| DT3
+    GW -->|Hydrostatic Telemetry| DT4
 ```
 
 ---
 
-## 💰 Bill of Materials (BOM) Comparison
+## 💰 The Complete $500 Farm Digital Twin BOM
 
-| Sub-System | Farm Omni Gateway Component | Unit Cost (Batch 50 pcs) | Dragino DLOS8N |
+Here is the exact bill of materials to equip a 50 to 500-hectare farm with all hardware:
+
+| Layer | Component | Function | Estimated Cost |
 | :--- | :--- | :--- | :--- |
-| **Host Compute Engine** | MediaTek MT7628AN Core Board (128M/32M, Wi-Fi, USB, Dual UART) | **$8.50** | Atheros AR9331 (Obsolete) |
-| **LoRaWAN Concentrator** | Semtech SX1302 / SX1303 (Seeed WM1302 Mini-PCIe SPI) | **$28.00** | SX1302 Module |
-| **4G Cellular Backhaul** | Quectel EC200U-EU (LTE Cat 1 bis, Single RF, SIM slot) | **$8.00** | Quectel EC25 ($25+) |
-| **Field Bus & Weather** | MAX13487 (RS-485) + 2N7002 (SDI-12) + Pulse RC filter | **$4.00** | *Not available* |
-| **Solar MPPT Power Stage** | TI BQ24650 circuit + 9-28V DC Buck rails | **$5.50** | *Basic 12V input only* |
-| **IP67 Enclosure & RF Ports** | Cast Aluminum Enclosure + SMA / N-Type Waterproof Connectors | **$16.00** | Plastic Enclosure |
-| **Base Gateway Total** | **LoRaWAN 8-Ch + 4G + Weather/SDI-12 + Solar MPPT** | **~$70.00** | **$290.00 - $350.00** |
-| **Optional RTK Base Module** | Quectel LC29H ($35) or u-blox ZED-F9P ($110) | **+$35.00 to +$110.00** | *Not available* |
-| **All-In-One RTK Edge Total**| **LoRaWAN + 4G + Weather + Centimeter RTK Base Station** | **~$105.00 to ~$180.00** | *Requires $2,000+ Trimble/Leica Base* |
+| **Core Edge Gateway** | MediaTek MT7628 Linux Board (128M/32M, Dual UART, Wi-Fi) | Host processing, local data buffering & OpenWrt | **$8.50** |
+| **Long-Range Radio** | Semtech SX1302 / SX1303 8-Channel Concentrator (WM1302) | Listens to hundreds of field nodes over 10 km | **$28.00** |
+| **Cellular Backhaul** | Quectel EC200U-EU (LTE Cat 1 bis) | Global 4G connectivity with standard SIM | **$8.00** |
+| **Precision Topography**| Quectel LC29H (Dual-band L1/L5 RTK GNSS) + Multi-band Antenna | Centimeter RTK Base Station for 3D field elevation | **$45.00** |
+| **Micro-Climate Suite** | RS-485 Ultrasonic Anemometer + Solar Radiation Pyranometer | Ambient temperature, humidity, wind & solar flux | **$85.00** |
+| **Rainfall Tracking** | Tipping Bucket Rain Gauge (0.2 mm resolution) | Direct precipitation counter via hardware interrupt | **$22.00** |
+| **Soil Profile Probes** | 3× Multi-depth capacitive soil moisture/temperature probes | Root-zone volumetric water content (SDI-12) | **$90.00** |
+| **Field Bus Drivers** | Isolated RS-485 (MAX13487) + SDI-12 bidir level-shifter | Industrial noise-immune field communications | **$6.00** |
+| **Solar Power Subsystem**| 35W Monocrystalline Panel + 12V 8Ah LiFePO4 Battery + MPPT | 100% off-grid autonomy (3+ days solar blackout) | **$65.00** |
+| **Rugged Housing** | Die-cast Aluminum Enclosure IP67 + Waterproof Cable Glands | Mast-mountable, UV & extreme weather resistant | **$18.00** |
+| **RF Cabling & Masts** | Coaxial pigtails, SMA/N-Type connectors, lightning arresters | Clean RF installation | **$14.00** |
+| **TOTAL FARM BOM** | **Complete Live Farm Digital Twin Hardware Infrastructure** | | **$389.50** |
+
+> 💡 **Result**: For **under $400 in hardware** (leaving $100 buffer for mounting brackets and cables), the farm possesses an edge infrastructure that rivals commercial telemetry packages costing upwards of $15,000.
 
 ---
 
-## 🌟 Key Features
+## 🌟 What the Sub-$500 Farm Digital Twin Delivers
 
-- **Quad-Capability Architecture**: Combines telemetry collection, weather monitoring, and robotic guidance into a single mast-mounted unit.
-- **Local ChirpStack Edge Engine**: Runs a standalone LoRaWAN Network Server locally. Even when 4G is down for weeks, all field data is cached in SQLite and processed on-site.
-- **Wi-Fi Maintenance Portal**: Agronomists and farm technicians connect directly via smartphone Wi-Fi at the base of the mast to diagnose sensors or view live plots without opening the sealed enclosure.
-- **Centimeter-Grade RTK Correction Caster**: Streams RTCM3 corrections over local Wi-Fi, LoRa, or cellular NTRIP caster (`caster.hey.brad.ag:2101`) to guide autonomous tractors within a 15 km radius.
-- **100% Autonomous Solar Operation**: Consumes only ~2.2W in nominal continuous operation; a compact 30W solar panel and a 12V 8Ah LiFePO4 battery provide indefinite off-grid autonomy.
+1. **Autonomous Irrigation Optimization**:
+   - Compares real-time soil water tension at 15cm, 30cm, and 60cm depths against daily evapo-transpiration (ET0) calculated from the gateway's solar pyranometer and wind speed.
+2. **Centimeter Precision Guidance & Elevation Model (DEM)**:
+   - The integrated RTK base broadcasts standard RTCM 3.x corrections over local radio or cellular NTRIP caster. Tractors and drones achieve **sub-2 centimeter accuracy** without recurring satellite correction subscriptions ($2,500/yr saved per tractor).
+3. **Local-First & Offline Resilience**:
+   - The gateway runs a local LoRaWAN Network Server (`chirpstack-concentratord`) and an embedded SQLite time-series database. If cellular coverage drops for weeks, telemetry continues to be recorded on-site without data loss.
+4. **Direct Technician Wi-Fi Portal**:
+   - Integrated 802.11n Wi-Fi allows farm operators to inspect sensor health and view live parcel dashboards directly on their smartphones while standing at the base of the mast.
 
 ---
 
-## 📚 Documentation & Guides
+## 📚 Technical Implementation & Schematics
 
-- 👉 [**HOWTO.md**](./HOWTO.md) — Complete step-by-step engineering, pinouts, OpenWrt build, and deployment guide.
-- 👉 [**AGENTS.md**](./AGENTS.md) — LLM agent standards and 3-tier contribution protocol.
+See the complete step-by-step assembly, pinouts, and software deployment instructions in [**HOWTO.md**](./HOWTO.md).
 
 ---
 
