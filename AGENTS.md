@@ -2,7 +2,7 @@
 
 > **Audience**: AI Coding Agents & Human Pair Programming  
 > **Platform**: OpenWrt Linux + MediaTek MT7628 + Semtech SX1302/SX1303 + Quectel EC200U + GNSS RTK  
-> **License**: AGPL-v3
+> **License**: Multi-Tier (Hardware: `CERN-OHL-S-2.0` | OS: `GPL-2.0` | Software: `AGPL-3.0`)
 
 ---
 

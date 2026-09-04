@@ -1,0 +1,22 @@
+CERN Open Hardware Licence Version 2 - Strongly Reciprocal
+CERN-OHL-S-2.0
+
+Preamble
+CERN has developed this licence to promote collaboration on the hardware
+designs of products, like the creative commons and open source software
+licences do for their respective fields.
+
+1. Definitions
+1.1 'Licence' means this CERN-OHL-S.
+1.2 'Source' means information such as design materials, schematics, PCB
+layouts, bill of materials and documentation which can be used to make, test,
+operate or maintain a Product.
+1.3 'Covered Source' means Source that is released subject to this Licence.
+1.4 'Product' means any tangible physical object made using the Source.
+
+2. Grant of Rights
+2.1 You may copy and distribute verbatim copies of the Source.
+2.2 You may modify the Source and distribute the modified Source, provided that
+the modified Source is licensed under this Licence (CERN-OHL-S v2).
+2.3 You may manufacture, run, test and distribute Products based on the Source,
+provided that you make available the corresponding Source under this Licence.

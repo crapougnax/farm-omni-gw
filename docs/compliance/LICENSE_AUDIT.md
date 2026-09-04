@@ -1,7 +1,7 @@
 # Open-Source Hardware & Software License Audit
 ### *Living BOM Compliance Matrix & Intellectual Property Register*
 
-- **Repository License:** [**AGPL-v3**](../../LICENSE)
+- **Repository License Architecture:** [**Multi-Tier by Layer**](../../LICENSE) (`CERN-OHL-S-2.0` / `GPL-2.0` / `AGPL-3.0`)
 - **Governing Policy:** [**AGENTS.md (Section 2.C)**](../../AGENTS.md#c-open-source-license-verification-for-component-libraries-strict-rule)
 - **Last Updated:** September 4, 2026
 - **Status:** 🛡️ **100% COMPLIANT — ZERO PROPRIETARY BINARY BLOBS**

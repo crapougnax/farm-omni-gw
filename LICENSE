@@ -1,18 +1,48 @@
-                    GNU AFFERO GENERAL PUBLIC LICENSE
-                       Version 3, 19 November 2007
+# Multi-Tier Licensing Architecture — Farm Omni Gateway
 
- Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.
+To ensure complete legal rigor, prevent license conflicts between the Linux kernel and user-space applications, and provide reciprocal protection for physical hardware designs, **Farm Omni Gateway** adopts a **Multi-Tier Licensing Architecture by Layer**:
 
-                            Preamble
+```text
+farm-omni-gw/
+├── hardware/              --> CERN-OHL-S v2 (Strongly Reciprocal Open Hardware)
+│   └── LICENSE
+├── os/                    --> GPL-2.0 (OpenWrt & Linux Mainline Kernel Boundary)
+│   └── LICENSE
+├── software/              --> AGPL-v3 (GNU Affero GPL for Applications, Daemons & Twin Models)
+│   └── LICENSE
+└── LICENSE                --> Master Multi-Tier Licensing Declaration
+```
 
-  The GNU Affero General Public License is a free, copyleft license for
-software and other kinds of works, specifically designed to ensure
-cooperation with the community in the case of network server software.
+---
 
-  The licenses for most software and other practical works are designed
-to take away your freedom to share and change the works.  By contrast,
-our licenses are intended to guarantee your freedom to share and change
-all versions of a program--to make sure it remains free software for
-all its users.
+## 1. Layer Licensing Summary
+
+| Layer & Directory | Target Assets | Governing License | SPDX Identifier | Rationale |
+| :--- | :--- | :--- | :--- | :--- |
+| [**`hardware/`**](./hardware/) | Schematics, PCB layouts, BOM, mechanical CAD, 3D enclosures | **CERN-OHL-S v2** | `CERN-OHL-S-2.0` | Prevents proprietary hardware cloning; mandates sharing of modified hardware designs. |
+| [**`os/`**](./os/) | Kernel patches, device tree (DTS), OpenWrt configs, drivers | **GNU GPL v2.0** | `GPL-2.0-only` | Strictly respects the upstream Linux kernel license without GPL-v2/v3 conflicts. |
+| [**`software/`**](./software/) | Onboarding portal, telemetry daemons, RTK caster, digital twin schemas | **GNU Affero GPL v3.0** | `AGPL-3.0-or-later` | Ensures copyleft protection across network and IoT services; prevents closed SaaS appropriation. |
+
+---
+
+## 2. Full License Texts
+
+Detailed license texts are available in their respective subdirectories:
+- Hardware: [**`hardware/LICENSE`**](./hardware/LICENSE)
+- Operating System & Kernel: [**`os/LICENSE`**](./os/LICENSE)
+- Software & Daemons: [**`software/LICENSE`**](./software/LICENSE)
+
+Below are the declarations of the respective licenses:
+
+### A. Hardware (`CERN-OHL-S-2.0`)
+Copyright (C) 2026 Quatrain Technologies and Contributors.
+Licensed under the CERN Open Hardware Licence Version 2 - Strongly Reciprocal.
+You may redistribute and modify this documentation and hardware designs under the terms of the CERN-OHL-S v2.
+
+### B. Operating System & Linux Kernel (`GPL-2.0-only`)
+Copyright (C) 1989, 1991 Free Software Foundation, Inc.
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
+
+### C. Software, Daemons & Digital Twin Models (`AGPL-3.0-or-later`)
+Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

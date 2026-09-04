@@ -101,6 +101,14 @@ Here is the exact bill of materials to equip a 50 to 500-hectare farm with all h
 
 ---
 
-## 📄 License
+## 📄 Multi-Tier Licensing Architecture
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See the [LICENSE](./LICENSE) file for details.
+To ensure complete legal rigor, avoid GPL-v2/v3 kernel boundary conflicts, and protect open hardware designs, this repository employs a **Layered Multi-Licensing Model**:
+
+| Subdirectory | Domain | License | SPDX |
+| :--- | :--- | :--- | :--- |
+| [**`hardware/`**](./hardware/) | Schematics, PCB layout, BOM, mechanical CAD | **CERN-OHL-S v2** | `CERN-OHL-S-2.0` |
+| [**`os/`**](./os/) | Kernel patches, device trees (DTS), OpenWrt configs | **GNU GPL v2.0** | `GPL-2.0-only` |
+| [**`software/`**](./software/) | Applications, daemons, captive portal, twin models | **GNU Affero GPL v3.0** | `AGPL-3.0-or-later` |
+
+See the master [**LICENSE**](./LICENSE) file for the complete multi-tier declaration.
