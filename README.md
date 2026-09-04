@@ -94,7 +94,10 @@ Here is the exact bill of materials to equip a 50 to 500-hectare farm with all h
 
 ## 📚 Technical Implementation & Schematics
 
-See the complete step-by-step assembly, pinouts, and software deployment instructions in [**HOWTO.md**](./HOWTO.md).
+- 👉 [**HOWTO.md**](./HOWTO.md) — Complete step-by-step engineering, pinouts, OpenWrt build, and deployment guide.
+- 👉 [**Milestones Roadmap**](./docs/milestones/README.md) — The 6 progressive milestones from benchtop prototype to off-grid solar deployment.
+- 👉 [**License Audit Matrix**](./docs/compliance/LICENSE_AUDIT.md) — Living BOM open-source compliance matrix (Zero Proprietary Blobs).
+- 👉 [**AGENTS.md**](./AGENTS.md) — LLM agent standards and 3-tier contribution protocol.
 
 ---
 
